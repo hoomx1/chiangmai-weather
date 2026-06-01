@@ -21,8 +21,10 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .container { max-width: 420px; margin: 0 auto; padding: 20px 16px 40px; }
 
 /* 头部 */
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.city-selector { position: relative; }
+.header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; margin-bottom: 20px; }
+.city-selector { position: relative; justify-self: start; }
+.refresh-wrap { justify-self: end; }
+.ip-loc { font-size: 14px; color: rgba(255,255,255,0.85); text-align: center; white-space: nowrap; }
 .city-btn {
   background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
   border-radius: 22px; padding: 8px 18px; font-size: 15px; color: #fff;
@@ -48,7 +50,6 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .city-dropdown .opt:hover { background: #f0f5ff; }
 .city-dropdown .opt.active { color: #3a7bd5; font-weight: 600; background: #e8f0ff; }
 .city-dropdown .opt .check { color: #3a7bd5; font-size: 14px; }
-.ip-loc { font-size: 12px; color: rgba(255,255,255,0.65); padding: 4px 0; text-align: right; }
 
 /* 刷新 */
 .refresh-btn {
@@ -168,7 +169,9 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
       </div>
     </div>
     <div class="ip-loc" id="ip-loc"></div>
-    <button class="refresh-btn" onclick="refreshWeather()" id="refresh-btn">↻</button>
+    <div class="refresh-wrap">
+      <button class="refresh-btn" onclick="refreshWeather()" id="refresh-btn">↻</button>
+    </div>
   </div>
 
   <div class="current">
