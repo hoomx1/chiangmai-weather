@@ -97,18 +97,19 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .hourly-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 2px; }
 .hourly-strip::-webkit-scrollbar-track { background: transparent; }
 .hourly-item {
-  display: inline-block; width: 62px; text-align: center; white-space: normal;
-  font-size: 14px; margin-right: 8px; vertical-align: top;
+  display: inline-block; width: 55px; text-align: center;
+  font-size: 13px; margin-right: 6px; vertical-align: top;
   background: rgba(255,255,255,0.13); backdrop-filter: blur(10px);
-  border-radius: 14px; padding: 12px 4px 10px;
+  border-radius: 12px; padding: 10px 2px 8px;
   border: 1px solid rgba(255,255,255,0.18);
+  box-sizing: border-box;
 }
 .hourly-item:last-child { margin-right: 0; }
 .hourly-item .hr-time { font-size: 11px; opacity: 0.7; margin-bottom: 6px; }
-.hourly-item .hr-icon { font-size: 24px; margin-bottom: 5px; height: 28px; display: flex; align-items: center; justify-content: center; }
-.hourly-item .hr-icon svg { width: 24px; height: 24px; }
-.hourly-item .hr-temp { font-size: 16px; font-weight: 300; }
-.hourly-item .hr-rain { font-size: 10px; opacity: 0.7; margin-top: 4px; color: #a0d8ef; }
+.hourly-item .hr-icon { font-size: 22px; margin-bottom: 4px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.hourly-item .hr-icon svg { width: 22px; height: 22px; }
+.hourly-item .hr-temp { font-size: 15px; font-weight: 300; }
+.hourly-item .hr-rain { font-size: 10px; opacity: 0.7; margin-top: 3px; color: #a0d8ef; }
 .hourly-item .hr-rain.thunder { color: #ffd166; }
 
 /* 7天预报 */
@@ -414,38 +415,44 @@ function render(data) {
     document.getElementById(k+'-desc').textContent = translateDesc(d.weatherDesc?.[0]?.value);
   });
 
-  // 24小时逐时预报（从当前小时开始，最多 8 个 3 小时段）
+  // 24小时逐时预报（每1小时，共24段，含已过时段，缺失数据插值）
   const hourlyStrip = document.getElementById('hourly-strip');
   hourlyStrip.innerHTML = '';
-  const nowH = new Date().getHours();
   const hourly = today.hourly || [];
-  const nextHourly = days[1]?.hourly || [];
 
-  // 过滤已过时段，保留今天剩余的
-  const futureToday = hourly.filter(h => Math.floor(+h.time / 100) >= nowH);
-  // 从明天补足到 8 段
-  const need = 8 - futureToday.length;
-  const futureTomorrow = nextHourly.slice(0, Math.max(0, need));
-  const combined = [...futureToday, ...futureTomorrow];
+  const slot = {};
+  hourly.forEach(h => { slot[Math.floor(+h.time / 100)] = h; });
 
-  combined.forEach((h, idx) => {
-    const t = +h.time;
-    const hour = Math.floor(t / 100);
-    const isTomorrow = idx >= futureToday.length;
-    const timeStr = isTomorrow ? `明${hour}:00` : `${hour}:00`;
-    const wc = +h.weatherCode;
-    const rainChance = parseInt(h.chanceofrain) || 0;
+  for (let h = 0; h < 24; h++) {
+    const timeStr = `${h}:00`;
+    let data = slot[h];
+    if (!data) {
+      let lo = h, hi = h;
+      while (lo >= 0 && !slot[lo]) lo--;
+      while (hi < 24 && !slot[hi]) hi++;
+      const loData = lo >= 0 ? slot[lo] : null;
+      const hiData = hi < 24 ? slot[hi] : null;
+      if (loData && hiData) {
+        const ratio = (h - lo) / (hi - lo);
+        const tempC = Math.round(+loData.tempC * (1 - ratio) + +hiData.tempC * ratio);
+        data = { time: h * 100, tempC, weatherCode: loData.weatherCode, chanceofrain: loData.chanceofrain || '0' };
+      } else {
+        data = loData || hiData || { time: h * 100, tempC: '--', weatherCode: '113', chanceofrain: '0' };
+      }
+    }
+    const wc = +data.weatherCode;
+    const rainChance = parseInt(data.chanceofrain) || 0;
     const rainClass = wc >= 200 && wc < 300 ? ' thunder' : '';
     const item = document.createElement('div');
     item.className = 'hourly-item';
     item.innerHTML = `
       <div class="hr-time">${timeStr}</div>
       <div class="hr-icon">${getIcon(wc)}</div>
-      <div class="hr-temp">${h.tempC}°</div>
+      <div class="hr-temp">${data.tempC}°</div>
       ${rainChance > 0 ? `<div class="hr-rain${rainClass}">🌧 ${rainChance}%</div>` : ''}
     `;
     hourlyStrip.appendChild(item);
-  });
+  }
 
   // 7天预报：前3天 wttr.in + 后4天 Open-Meteo
   const wd = ['周日','周一','周二','周三','周四','周五','周六'];
