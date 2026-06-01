@@ -3,555 +3,537 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>墨迹天气 - 清迈</title>
+<title>清迈天气</title>
 <style>
-/* ===== 基础样式 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  background: linear-gradient(180deg, #4a90d9 0%, #7ec8f8 40%, #b8e0f8 70%, #e8f4f8 100%);
   min-height: 100vh;
   color: #fff;
   transition: background 1.5s ease;
 }
+body.clear { background: linear-gradient(180deg, #3a7bd5 0%, #6db3f2 40%, #a1c4fd 70%, #e2ebf0 100%); }
+body.cloudy { background: linear-gradient(180deg, #606c88 0%, #7b8ba0 40%, #9aadc0 70%, #c8d6e0 100%); }
+body.rain { background: linear-gradient(180deg, #3a4a5a 0%, #4e5d6c 40%, #637483 70%, #7d8e9e 100%); }
+body.thunder { background: linear-gradient(180deg, #14142b 0%, #26264a 40%, #383868 70%, #4a4a86 100%); }
+body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6e 70%, #3c3c8e 100%); }
 
-/* 天气主题背景 */
-body.clear { background: linear-gradient(180deg, #4a90d9 0%, #63b8ff 40%, #87ceeb 70%, #e0f0ff 100%); }
-body.cloudy { background: linear-gradient(180deg, #5a6a7a 0%, #7a8a9a 40%, #9aafc0 70%, #c8d8e8 100%); }
-body.rain { background: linear-gradient(180deg, #3a4a5a 0%, #4a5a6a 40%, #5a6a7a 70%, #708090 100%); }
-body.thunder { background: linear-gradient(180deg, #1a1a2e 0%, #2a2a4e 40%, #3a3a5e 70%, #4a4a6e 100%); }
-body.night { background: linear-gradient(180deg, #0a0a2e 0%, #1a1a4e 40%, #2a2a5e 70%, #3a4a7e 100%); }
+.container { max-width: 420px; margin: 0 auto; padding: 20px 16px 40px; overflow: hidden; }
 
-/* ===== 容器 ===== */
-.container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 20px 16px 40px;
-}
-
-/* ===== 顶部：城市选择 ===== */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.city-selector {
-  position: relative;
-}
+/* 头部 */
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.city-selector { position: relative; }
 .city-btn {
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 15px;
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 22px; padding: 8px 18px; font-size: 15px; color: #fff;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  backdrop-filter: blur(12px); transition: background 0.2s;
 }
-.city-btn:hover { background: rgba(255,255,255,0.3); }
+.city-btn:hover { background: rgba(255,255,255,0.28); }
+.city-arrow { font-size: 11px; opacity: 0.7; transition: transform 0.2s; }
+.city-arrow.up { transform: rotate(180deg); }
+
 .city-dropdown {
-  display: none;
-  position: absolute;
-  top: 44px;
-  left: 0;
-  background: rgba(255,255,255,0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  overflow: hidden;
-  min-width: 180px;
-  z-index: 100;
+  display: none; position: absolute; top: 46px; left: 0;
+  background: rgba(255,255,255,0.96); border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18); overflow: hidden;
+  min-width: 200px; z-index: 100;
 }
 .city-dropdown.show { display: block; }
-.city-dropdown .option {
-  padding: 12px 18px;
-  font-size: 15px;
-  color: #333;
-  cursor: pointer;
-  transition: background 0.2s;
+.city-dropdown .opt {
+  padding: 13px 20px; font-size: 15px; color: #333;
+  cursor: pointer; transition: background 0.15s;
+  display: flex; justify-content: space-between; align-items: center;
 }
-.city-dropdown .option:hover { background: #f0f4ff; }
-.city-dropdown .option.active { color: #4a90d9; font-weight: 600; background: #e8f0ff; }
-.ip-location {
-  font-size: 12px;
-  color: rgba(255,255,255,0.7);
-  padding: 4px 0;
-}
+.city-dropdown .opt:hover { background: #f0f5ff; }
+.city-dropdown .opt.active { color: #3a7bd5; font-weight: 600; background: #e8f0ff; }
+.city-dropdown .opt .check { color: #3a7bd5; font-size: 14px; }
+.ip-loc { font-size: 12px; color: rgba(255,255,255,0.65); padding: 4px 0; text-align: right; }
 
-/* ===== 刷新按钮 ===== */
+/* 刷新 */
 .refresh-btn {
-  background: rgba(255,255,255,0.2);
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 18px;
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  transition: transform 0.3s;
+  background: rgba(255,255,255,0.18); border: none; border-radius: 50%;
+  width: 36px; height: 36px; font-size: 20px; color: #fff;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(12px); transition: transform 0.3s;
 }
-.refresh-btn:hover { background: rgba(255,255,255,0.3); }
 .refresh-btn.loading { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.refresh-btn:hover { background: rgba(255,255,255,0.28); }
 
-/* ===== 当前天气主体 ===== */
-.current-weather {
-  text-align: center;
-  margin-bottom: 32px;
-  padding: 20px 0;
-}
-.temperature {
-  font-size: 82px;
-  font-weight: 200;
-  line-height: 1;
-  position: relative;
-  display: inline-block;
-}
-.temperature .unit {
-  font-size: 28px;
-  position: absolute;
-  top: 10px;
-  right: -30px;
-  font-weight: 300;
-}
-.weather-desc {
-  font-size: 20px;
-  margin: 8px 0 4px;
-  font-weight: 400;
-}
-.feels-like {
-  font-size: 14px;
-  opacity: 0.8;
-  margin-bottom: 16px;
-}
+/* 当前天气 */
+.current { text-align: center; margin-bottom: 28px; padding: 10px 0; }
+.big-temp { font-size: 88px; font-weight: 200; line-height: 1; display: inline-block; position: relative; }
+.big-temp .u { font-size: 30px; position: absolute; top: 8px; right: -34px; font-weight: 300; }
+.cur-desc { font-size: 22px; margin: 6px 0 2px; font-weight: 400; }
+.cur-feels { font-size: 15px; opacity: 0.8; margin-bottom: 18px; }
 
-/* 详细数据条 */
-.detail-strip {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  font-size: 13px;
-  opacity: 0.9;
-}
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.detail-item .label { font-size: 11px; opacity: 0.7; }
+.detail-row { display: flex; justify-content: center; gap: 28px; font-size: 14px; }
+.detail-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.detail-item .val { font-weight: 500; }
+.detail-item .lbl { font-size: 11px; opacity: 0.65; }
 
-/* ===== 分时段卡片 ===== */
-.timeline-title {
-  font-size: 15px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  padding-left: 4px;
+/* 分时段 */
+.sec-title { font-size: 15px; font-weight: 500; margin: 0 0 12px 4px; opacity: 0.9; }
+.tl-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
+.tl-card {
+  background: rgba(255,255,255,0.16); backdrop-filter: blur(12px);
+  border-radius: 16px; padding: 18px 8px 14px; text-align: center;
+  border: 1px solid rgba(255,255,255,0.22); transition: transform 0.2s;
 }
-.timeline-cards {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-.timeline-card {
-  flex: 1;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  padding: 16px 10px;
-  text-align: center;
-  border: 1px solid rgba(255,255,255,0.25);
-  transition: transform 0.2s;
-}
-.timeline-card:hover { transform: translateY(-2px); }
-.timeline-card .time-label {
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 6px;
-  opacity: 0.8;
-}
-.timeline-card .time-icon {
-  font-size: 32px;
-  margin-bottom: 6px;
-}
-.timeline-card .time-temp {
-  font-size: 22px;
-  font-weight: 300;
-}
-.timeline-card .time-desc {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-top: 4px;
-}
+.tl-card:hover { transform: translateY(-3px); }
+.tl-card .tl-icon { font-size: 36px; margin-bottom: 8px; }
+.tl-card .tl-time { font-size: 13px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
+.tl-card .tl-temp { font-size: 24px; font-weight: 300; }
+.tl-card .tl-desc { font-size: 13px; opacity: 0.75; margin-top: 5px; }
 
-/* ===== 7天预报 ===== */
-.forecast-title {
-  font-size: 15px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  padding-left: 4px;
+/* 24小时逐时预报 */
+.hourly-strip {
+  display: flex; overflow-x: auto; gap: 8px; padding: 4px 0 8px;
+  margin-bottom: 28px; scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
-.forecast-list {
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.25);
+.hourly-strip::-webkit-scrollbar { display: none; }
+.hourly-item {
+  flex: 0 0 auto; min-width: 62px; text-align: center;
+  background: rgba(255,255,255,0.13); backdrop-filter: blur(10px);
+  border-radius: 14px; padding: 12px 6px 10px;
+  border: 1px solid rgba(255,255,255,0.18);
 }
+.hourly-item .hr-time { font-size: 11px; opacity: 0.7; margin-bottom: 6px; }
+.hourly-item .hr-icon { font-size: 24px; margin-bottom: 5px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.hourly-item .hr-icon svg { width: 24px; height: 24px; }
+.hourly-item .hr-temp { font-size: 16px; font-weight: 300; }
+.hourly-item .hr-rain { font-size: 10px; opacity: 0.7; margin-top: 4px; color: #a0d8ef; }
+.hourly-item .hr-rain.thunder { color: #ffd166; }
+
+/* 7天预报 */
+.forecast-list { margin-bottom: 10px; }
 .forecast-row {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  transition: background 0.2s;
+  display: grid; grid-template-columns: 80px 40px 1fr 72px;
+  align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.14); backdrop-filter: blur(10px);
+  border-radius: 14px; padding: 12px 16px; margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.18); transition: background 0.2s;
 }
-.forecast-row:last-child { border-bottom: none; }
-.forecast-row:hover { background: rgba(255,255,255,0.1); }
-.forecast-row .day { width: 70px; font-size: 14px; }
-.forecast-row .day .date { font-size: 11px; opacity: 0.7; }
-.forecast-row .icon { font-size: 24px; width: 40px; text-align: center; }
-.forecast-row .desc { flex: 1; font-size: 13px; padding: 0 8px; }
-.forecast-row .temps { text-align: right; font-size: 14px; }
-.forecast-row .temps .low { opacity: 0.6; font-size: 13px; }
+.forecast-row:hover { background: rgba(255,255,255,0.22); }
+.forecast-row .day-col { font-size: 14px; font-weight: 500; }
+.forecast-row .day-col .date-col { font-size: 11px; opacity: 0.65; font-weight: 400; }
+.forecast-row .icon-col { font-size: 26px; text-align: center; }
+.forecast-row .desc-col { font-size: 14px; }
+.forecast-row .temp-col { text-align: right; font-size: 15px; white-space: nowrap; }
+.forecast-row .temp-col .lo { opacity: 0.55; font-size: 13px; }
 
-/* ===== 底部 ===== */
-.footer {
-  text-align: center;
-  margin-top: 40px;
-  font-size: 11px;
-  opacity: 0.5;
-  padding-bottom: 20px;
-}
+/* 底部 */
+.footer { text-align: center; margin-top: 36px; font-size: 11px; opacity: 0.45; padding-bottom: 16px; }
 
-/* ===== 加载状态 ===== */
+/* 加载 */
 .loading-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 200;
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.25); z-index: 200;
+  align-items: center; justify-content: center;
 }
-.loading-overlay.show { display: flex; align-items: center; justify-content: center; }
-.spinner {
-  width: 40px; height: 40px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+.loading-overlay.show { display: flex; }
+.spinner { width: 38px; height: 38px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-/* ===== 响应式 ===== */
+/* 响应式 */
 @media (max-width: 360px) {
-  .temperature { font-size: 64px; }
-  .timeline-cards { gap: 6px; }
-  .timeline-card { padding: 12px 6px; }
+  .big-temp { font-size: 68px; }
+  .tl-cards { gap: 6px; }
+  .tl-card { padding: 14px 4px 10px; }
+  .tl-card .tl-icon { font-size: 28px; }
+  .forecast-row { padding: 10px 12px; gap: 4px; grid-template-columns: 65px 34px 1fr 60px; }
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- 头部 -->
   <div class="header">
     <div class="city-selector">
       <button class="city-btn" onclick="toggleCityMenu()">
-        <span id="current-city">清迈</span>
-        <span style="font-size:12px">▼</span>
+        <span id="cur-city">清迈</span>
+        <span class="city-arrow" id="city-arrow">▼</span>
       </button>
-      <div class="city-dropdown" id="city-dropdown">
-        <div class="option" data-city="Chiang+Mai" data-name="清迈" onclick="selectCity(this)">清迈 · Chiang Mai</div>
-        <div class="option" data-city="Bangkok" data-name="曼谷" onclick="selectCity(this)">曼谷 · Bangkok</div>
-        <div class="option" data-city="Pattaya" data-name="芭堤雅" onclick="selectCity(this)">芭堤雅 · Pattaya</div>
-        <div class="option" data-city="Phuket" data-name="普吉岛" onclick="selectCity(this)">普吉岛 · Phuket</div>
+      <div class="city-dropdown" id="city-dd">
+        <div class="opt" data-city="Chiang+Mai" data-name="清迈" onclick="selectCity(this)"><span>清迈 · Chiang Mai</span><span class="check">✔</span></div>
+        <div class="opt" data-city="Bangkok" data-name="曼谷" onclick="selectCity(this)"><span>曼谷 · Bangkok</span><span class="check"></span></div>
+        <div class="opt" data-city="Pattaya" data-name="芭堤雅" onclick="selectCity(this)"><span>芭堤雅 · Pattaya</span><span class="check"></span></div>
+        <div class="opt" data-city="Phuket" data-name="普吉岛" onclick="selectCity(this)"><span>普吉岛 · Phuket</span><span class="check"></span></div>
       </div>
     </div>
-    <div id="ip-location" class="ip-location"></div>
+    <div class="ip-loc" id="ip-loc"></div>
     <button class="refresh-btn" onclick="refreshWeather()" id="refresh-btn">↻</button>
   </div>
 
-  <!-- 当前天气 -->
-  <div class="current-weather">
-    <div class="temperature">
-      <span id="cur-temp">--</span>
-      <span class="unit">°</span>
-    </div>
-    <div class="weather-desc" id="cur-desc">--</div>
-    <div class="feels-like" id="cur-feels">体感温度 --</div>
-    <div class="detail-strip">
-      <div class="detail-item">
-        <span id="cur-humidity">--</span>
-        <span class="label">湿度</span>
-      </div>
-      <div class="detail-item">
-        <span id="cur-wind">--</span>
-        <span class="label">风力</span>
-      </div>
-      <div class="detail-item">
-        <span id="cur-visibility">--</span>
-        <span class="label">能见度</span>
-      </div>
-      <div class="detail-item">
-        <span id="cur-uv">--</span>
-        <span class="label">紫外线</span>
-      </div>
+  <div class="current">
+    <div class="big-temp"><span id="cur-temp">--</span><span class="u">°</span></div>
+    <div class="cur-desc" id="cur-desc">--</div>
+    <div class="cur-feels" id="cur-feels">体感 --°</div>
+    <div class="detail-row">
+      <div class="detail-item"><span class="val" id="cur-hum">--</span><span class="lbl">湿度</span></div>
+      <div class="detail-item"><span class="val" id="cur-wind">--</span><span class="lbl">风力风向</span></div>
+      <div class="detail-item"><span class="val" id="cur-vis">--</span><span class="lbl">能见度</span></div>
+      <div class="detail-item"><span class="val" id="cur-uv">--</span><span class="lbl">紫外线</span></div>
     </div>
   </div>
 
-  <!-- 早中晚分时段 -->
-  <div class="timeline-title">今日分段预报</div>
-  <div class="timeline-cards">
-    <div class="timeline-card">
-      <div class="time-label">🌅 早晨</div>
-      <div class="time-icon" id="morning-icon">--</div>
-      <div class="time-temp" id="morning-temp">--°</div>
-      <div class="time-desc" id="morning-desc">--</div>
+  <div class="sec-title">今日分段预报</div>
+  <div class="tl-cards">
+    <div class="tl-card">
+      <div class="tl-icon" id="m-icon">--</div>
+      <div class="tl-time">早晨 6:00</div>
+      <div class="tl-temp" id="m-temp">--°</div>
+      <div class="tl-desc" id="m-desc">--</div>
     </div>
-    <div class="timeline-card">
-      <div class="time-label">☀️ 中午</div>
-      <div class="time-icon" id="noon-icon">--</div>
-      <div class="time-temp" id="noon-temp">--°</div>
-      <div class="time-desc" id="noon-desc">--</div>
+    <div class="tl-card">
+      <div class="tl-icon" id="n-icon">--</div>
+      <div class="tl-time">中午 12:00</div>
+      <div class="tl-temp" id="n-temp">--°</div>
+      <div class="tl-desc" id="n-desc">--</div>
     </div>
-    <div class="timeline-card">
-      <div class="time-label">🌆 傍晚</div>
-      <div class="time-icon" id="evening-icon">--</div>
-      <div class="time-temp" id="evening-temp">--°</div>
-      <div class="time-desc" id="evening-desc">--</div>
+    <div class="tl-card">
+      <div class="tl-icon" id="e-icon">--</div>
+      <div class="tl-time">傍晚 18:00</div>
+      <div class="tl-temp" id="e-temp">--°</div>
+      <div class="tl-desc" id="e-desc">--</div>
     </div>
   </div>
 
-  <!-- 7天预报 -->
-  <div class="forecast-title">7天天气预报</div>
+  <div class="sec-title">24小时逐时预报</div>
+  <div class="hourly-strip" id="hourly-strip"></div>
+
+  <div class="sec-title">7天天气预报</div>
   <div class="forecast-list" id="forecast-list"></div>
 
   <div class="footer">
-    数据来源：wttr.in / WorldWeatherOnline<br>
-    更新时间：<span id="update-time">--</span>
+    数据来源：wttr.in &middot; WorldWeatherOnline<br>
+    更新于 <span id="update-time">--</span>
   </div>
 </div>
 
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-</div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
 
 <script>
-// ========== 城市配置 ==========
+// ===== 城市配置 =====
 const CITIES = {
-  'Chiang+Mai': { name: '清迈', lat: 18.7883, lon: 98.9853 },
-  'Bangkok':    { name: '曼谷', lat: 13.7563, lon: 100.5018 },
-  'Pattaya':    { name: '芭堤雅', lat: 12.9236, lon: 100.8825 },
-  'Phuket':     { name: '普吉岛', lat: 7.8804, lon: 98.3923 },
+  'Chiang+Mai':{n:'清迈',lat:18.7883,lon:98.9853},
+  'Bangkok':{n:'曼谷',lat:13.7563,lon:100.5018},
+  'Pattaya':{n:'芭堤雅',lat:12.9236,lon:100.8825},
+  'Phuket':{n:'普吉岛',lat:7.8804,lon:98.3923},
+};
+let curCity = 'Chiang+Mai';
+
+// Open-Meteo WMO 天气码 → 中文描述
+const WMO_DESC = {0:'晴',1:'晴',2:'多云',3:'阴',45:'雾',48:'雾凇',51:'毛毛雨',53:'毛毛雨',55:'毛毛雨',56:'冻毛毛雨',57:'冻毛毛雨',61:'小雨',63:'中雨',65:'大雨',66:'小冻雨',67:'大冻雨',71:'小雪',73:'中雪',75:'大雪',77:'雪粒',80:'小阵雨',81:'中阵雨',82:'大阵雨',85:'小阵雪',86:'大阵雪',95:'雷暴',96:'雷暴伴冰雹',99:'强雷暴伴大冰雹'};
+function wmoToCode(w) { if(w<=1)return 113; if(w===2)return 116; if(w===3)return 119; if(w===45||w===48)return 143; if(w>=51&&w<=55)return 176; if(w>=61&&w<=67)return 296; if(w>=71&&w<=77)return 326; if(w>=80&&w<=82)return 176; if(w>=85&&w<=86)return 326; if(w>=95)return 200; return 119; }
+
+// ===== 天气描述中文映射 =====
+const DESC_CN = {
+  'Clear':'晴','Sunny':'晴','Partly Cloudy':'多云','Partly cloudy':'多云',
+  'Cloudy':'阴','Overcast':'阴','Mist':'薄雾','Fog':'雾','Haze':'霾',
+  'Patchy rain nearby':'局部阵雨','Patchy rain possible':'局部阵雨',
+  'Patchy light rain':'局部小雨','Patchy light rain with thunder':'局部雷阵雨',
+  'Light rain':'小雨','Light rain shower':'小阵雨',
+  'Moderate rain':'中雨','Moderate rain at times':'间歇中雨',
+  'Heavy rain':'大雨','Heavy rain at times':'间歇大雨',
+  'Torrential rain shower':'暴雨','Very heavy rain':'暴雨',
+  'Light drizzle':'毛毛雨','Patchy light drizzle':'局部毛毛雨',
+  'Thundery outbreaks nearby':'周边雷暴','Thundery outbreaks possible':'可能有雷暴',
+  'Patchy light rain with thunder':'局部雷阵雨',
+  'Moderate or heavy rain shower':'中到大阵雨',
+  'Moderate or heavy rain with thunder':'雷雨交加',
+  'Moderate or heavy snow showers':'中到大雪','Patchy snow nearby':'局部雪',
+  'Light snow':'小雪','Moderate snow':'中雪','Heavy snow':'大雪',
+  'Patchy sleet nearby':'局部雨夹雪','Light sleet':'小雨夹雪',
+  'Moderate or heavy sleet':'中到大雨夹雪',
+  'Ice pellets':'冰粒','Light freezing rain':'小冻雨',
+  'Moderate or heavy freezing rain':'中到大冻雨',
+  'Blowing snow':'吹雪','Blizzard':'暴风雪',
+  'Freezing fog':'冻雾','Freezing drizzle':'冻毛毛雨',
+  'Heavy freezing drizzle':'大冻毛毛雨',
+  'Light snow showers':'小阵雪','Moderate or heavy snow showers':'中到大阵雪',
+  'Thundery snow showers':'雷阵雪','Thundery showers':'雷阵雨',
+  'Light sleet showers':'小雨夹雪','Heavy snow showers':'大阵雪',
+  'Light rain with thunder':'小雨伴雷','Moderate or heavy rain with thunder in area':'雷雨',
 };
 
-let currentCity = 'Chiang+Mai';
-
-// ========== 天气图标映射 ==========
-function getWeatherIcon(code, isNight) {
-  // wttr.in weatherCode → emoji
-  const icons = {
-    113: isNight ? '🌙' : '☀️',  // Clear
-    116: isNight ? '🌙' : '⛅',   // Partly Cloudy
-    119: '☁️',                     // Cloudy
-    122: '☁️',                     // Overcast
-    143: '🌫️',                    // Mist
-    176: '🌦️',                    // Patchy rain
-    179: '🌨️',                    // Patchy snow
-    182: '🌨️',                    // Patchy sleet
-    185: '🌧️',                    // Freezing drizzle
-    200: '⛈️',                    // Thundery outbreaks
-    227: '🌬️',                    // Blowing snow
-    230: '🌨️',                    // Blizzard
-    248: '🌫️',                    // Fog
-    260: '🌫️',                    // Freezing fog
-    263: '🌧️',                    // Patchy light drizzle
-    266: '🌧️',                    // Light drizzle
-    281: '🌧️',                    // Freezing drizzle
-    284: '🌧️',                    // Heavy freezing drizzle
-    293: '🌦️',                    // Patchy light rain
-    296: '🌦️',                    // Light rain
-    299: '🌧️',                    // Moderate rain
-    302: '🌧️',                    // Moderate rain
-    305: '🌧️',                    // Heavy rain
-    308: '🌧️',                    // Heavy rain
-    311: '🌧️',                    // Light freezing rain
-    314: '🌧️',                    // Moderate or heavy freezing rain
-    317: '🌨️',                    // Light sleet
-    320: '🌨️',                    // Moderate or heavy sleet
-    323: '🌨️',                    // Light snow
-    326: '🌨️',                    // Moderate snow
-    329: '❄️',                    // Patchy heavy snow
-    332: '❄️',                    // Heavy snow
-    335: '❄️',                    // Heavy snow
-    338: '❄️',                    // Heavy snow
-    350: '🌨️',                    // Ice pellets
-    353: '🌦️',                    // Light rain shower
-    356: '🌧️',                    // Moderate or heavy rain shower
-    359: '🌧️',                    // Torrential rain shower
-    362: '🌨️',                    // Light sleet showers
-    365: '🌨️',                    // Moderate or heavy sleet showers
-    368: '🌨️',                    // Light snow showers
-    371: '❄️',                    // Heavy snow showers
-    374: '🌨️',                    // Light ice pellets
-    377: '🌨️',                    // Moderate or heavy ice pellets
-    386: '⛈️',                    // Thundery showers
-    389: '⛈️',                    // Thundery showers
-    392: '⛈️',                    // Thundery snow
-    395: '❄️',                    // Heavy snow showers
-  };
-  return icons[code] || '🌤️';
+function translateDesc(en) {
+  if (!en) return '--';
+  const t = en.trim();
+  if (DESC_CN[t]) return DESC_CN[t];
+  // 模糊匹配
+  for (const k in DESC_CN) { if (t.includes(k)) return DESC_CN[k]; }
+  if (t.includes('rain') || t.includes('drizzle') || t.includes('shower')) return '有雨';
+  if (t.includes('cloud')) return '多云';
+  if (t.includes('thunder') || t.includes('thundery')) return '雷暴';
+  if (t.includes('snow') || t.includes('sleet') || t.includes('ice')) return '有雪';
+  if (t.includes('mist') || t.includes('fog') || t.includes('haze')) return '雾';
+  return t;
 }
 
-// ========== 获取数据 ==========
+// ===== 统一天气图标（使用 SVG 内联图标，跨平台 100% 一致） =====
+const ICON_SVG = {
+  // 晴
+  113: '<svg viewBox="0 0 40 40" width="36" height="36"><circle cx="20" cy="20" r="10" fill="#FFD93D"/><g stroke="#FFD93D" stroke-width="2.5" stroke-linecap="round"><line x1="20" y1="4" x2="20" y2="8"/><line x1="20" y1="32" x2="20" y2="36"/><line x1="4" y1="20" x2="8" y2="20"/><line x1="32" y1="20" x2="36" y2="20"/><line x1="8.7" y1="8.7" x2="11.5" y2="11.5"/><line x1="28.5" y1="28.5" x2="31.3" y2="31.3"/><line x1="8.7" y1="31.3" x2="11.5" y2="28.5"/><line x1="28.5" y1="11.5" x2="31.3" y2="8.7"/></g></svg>',
+  // 多云
+  116: '<svg viewBox="0 0 40 40" width="36" height="36"><circle cx="16" cy="16" r="8" fill="#FFD93D"/><g stroke="#FFD93D" stroke-width="2" stroke-linecap="round"><line x1="16" y1="3" x2="16" y2="6"/><line x1="16" y1="26" x2="16" y2="29"/><line x1="3" y1="16" x2="6" y2="16"/><line x1="26" y1="16" x2="29" y2="16"/></g><ellipse cx="24" cy="28" rx="14" ry="8" fill="#C8D6E5"/><ellipse cx="18" cy="26" rx="10" ry="7" fill="#D9E4F0"/></svg>',
+  // 阴
+  119: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="25" rx="18" ry="9" fill="#B0BEC5"/><ellipse cx="14" cy="23" rx="12" ry="7" fill="#CFD8DC"/></svg>',
+  // 雾
+  143: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="14" rx="15" ry="7" fill="#B0BEC5" opacity="0.5"/><ellipse cx="14" cy="12" rx="10" ry="5" fill="#CFD8DC" opacity="0.4"/><path d="M4,24 Q8,22 12,24 Q16,26 20,24 Q24,22 28,24 Q32,26 36,24" fill="none" stroke="#90A4AE" stroke-width="2.2" stroke-linecap="round"/><path d="M6,28 Q10,26 14,28 Q18,30 22,28 Q26,26 30,28 Q34,30 36,28" fill="none" stroke="#90A4AE" stroke-width="2.2" stroke-linecap="round"/><path d="M8,32 Q12,30 16,32 Q20,34 24,32 Q28,30 32,32" fill="none" stroke="#B0BEC5" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  // 阵雨/小雨
+  176: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="14" rx="16" ry="8" fill="#B0BEC5"/><ellipse cx="14" cy="12" rx="10" ry="6" fill="#CFD8DC"/><g stroke="#42A5F5" stroke-width="2" stroke-linecap="round"><line x1="10" y1="24" x2="8" y2="30"/><line x1="16" y1="24" x2="14" y2="30"/><line x1="22" y1="24" x2="20" y2="30"/><line x1="28" y1="24" x2="26" y2="30"/></g></svg>',
+  // 小雨
+  296: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="14" rx="16" ry="8" fill="#B0BEC5"/><ellipse cx="14" cy="12" rx="10" ry="6" fill="#CFD8DC"/><g stroke="#42A5F5" stroke-width="2.5" stroke-linecap="round"><line x1="10" y1="24" x2="8" y2="30"/><line x1="18" y1="24" x2="16" y2="30"/><line x1="26" y1="24" x2="24" y2="30"/></g></svg>',
+  // 中雨/大雨
+  302: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="12" rx="17" ry="8" fill="#90A4AE"/><ellipse cx="13" cy="10" rx="11" ry="6" fill="#B0BEC5"/><g stroke="#1E88E5" stroke-width="2.8" stroke-linecap="round"><line x1="9" y1="22" x2="6" y2="31"/><line x1="16" y1="22" x2="14" y2="31"/><line x1="23" y1="22" x2="22" y2="31"/><line x1="30" y1="22" x2="30" y2="31"/></g></svg>',
+  // 暴雨
+  359: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="11" rx="18" ry="8" fill="#78909C"/><ellipse cx="12" cy="9" rx="12" ry="6" fill="#90A4AE"/><g stroke="#1565C0" stroke-width="3" stroke-linecap="round"><line x1="8" y1="21" x2="4" y2="32"/><line x1="15" y1="21" x2="12" y2="32"/><line x1="22" y1="21" x2="20" y2="32"/><line x1="29" y1="21" x2="30" y2="32"/></g></svg>',
+  // 雷暴
+  200: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="12" rx="16" ry="8" fill="#78909C"/><ellipse cx="13" cy="10" rx="10" ry="6" fill="#90A4AE"/><polygon points="18,22 14,30 19,29 17,37 25,26 20,27 24,20" fill="#FFB300"/><g stroke="#FFB300" stroke-width="1.5" stroke-linecap="round"><line x1="22" y1="16" x2="20" y2="20"/></g></svg>',
+  // 雪
+  326: '<svg viewBox="0 0 40 40" width="36" height="36"><ellipse cx="20" cy="12" rx="16" ry="8" fill="#B0BEC5"/><ellipse cx="13" cy="10" rx="10" ry="6" fill="#CFD8DC"/><circle cx="10" cy="28" r="2.5" fill="#E0E0E0"/><circle cx="18" cy="30" r="2.5" fill="#E0E0E0"/><circle cx="26" cy="27" r="2.5" fill="#E0E0E0"/><circle cx="14" cy="34" r="2" fill="#E0E0E0"/><circle cx="22" cy="35" r="2" fill="#E0E0E0"/><circle cx="30" cy="32" r="2" fill="#E0E0E0"/></svg>',
+};
+
+// 天气码到图标类型映射
+function mapCodeToType(code) {
+  if (!code) return 119;
+  const c = +code;
+  if (c === 113) return 113;                               // Clear
+  if (c === 116) return 116;                               // Partly Cloudy
+  if (c === 119 || c === 122) return 119;                  // Cloudy/Overcast
+  if (c === 143 || c === 248 || c === 260) return 143;     // Mist/Fog
+  if (c >= 386 && c <= 395) return 200;                    // Thunder variants
+  if (c === 359 || c === 308) return 359;                  // Torrential/Heavy rain
+  if (c === 302 || c === 305 || c === 299) return 302;     // Moderate rain
+  if (c === 296 || c === 293 || c === 266 || c === 284) return 296; // Light rain
+  if (c === 176 || c === 263 || c === 353) return 176;     // Patchy/light showery
+  if (c === 185 || c === 281) return 296;                  // Freezing drizzle
+  if (c === 311 || c === 314) return 302;                  // Freezing rain
+  if (c >= 317 && c <= 395) return 326;                    // All snow/sleet
+  if (c === 200 || c === 386 || c === 389) return 200;     // Thunder
+  return 119; // default cloudy
+}
+
+const ICON_CACHE = {};
+
+function getIcon(code) {
+  const type = mapCodeToType(code);
+  if (!ICON_CACHE[type]) {
+    ICON_CACHE[type] = ICON_SVG[type] || ICON_SVG[119];
+  }
+  return ICON_CACHE[type];
+}
+
+// ===== 中文地名映射（IP API 返回英文时使用） =====
+const CITY_CN_MAP = {
+  'Chiang Mai':'清迈','Bangkok':'曼谷','Pattaya':'芭堤雅','Phuket':'普吉岛',
+  'Nonthaburi':'暖武里','Hat Yai':'合艾','Udon Thani':'乌隆他尼',
+  'Nakhon Ratchasima':'呵叻','Khon Kaen':'孔敬','Ubon Ratchathani':'乌汶',
+  'Nakhon Si Thammarat':'洛坤','Surat Thani':'素叻他尼',
+  'Chiang Rai':'清莱','Rayong':'罗勇','Hua Hin':'华欣','Krabi':'甲米',
+  'Samut Prakan':'北榄','Chon Buri':'春武里','Songkhla':'宋卡',
+  'Lampang':'南邦','Loei':'黎府','Trang':'董里',
+  'Beijing':'北京','Shanghai':'上海','Guangzhou':'广州','Shenzhen':'深圳',
+  'Hong Kong':'香港','Taipei':'台北','Singapore':'新加坡','Kuala Lumpur':'吉隆坡',
+  'Tokyo':'东京','Seoul':'首尔','London':'伦敦','New York':'纽约','Los Angeles':'洛杉矶',
+  'San Francisco':'旧金山','Paris':'巴黎','Berlin':'柏林','Sydney':'悉尼',
+};
+
+function toCNCity(name) {
+  if (!name) return '';
+  if (CITY_CN_MAP[name]) return CITY_CN_MAP[name];
+  return name;
+}
+
+// ===== 获取天气（wttr.in 前3天 + Open-Meteo 后4天） =====
 async function fetchWeather(city) {
-  const url = `https://wttr.in/${city}?format=j1`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error('Network error');
-  return resp.json();
+  const cfg = CITIES[city];
+  const [wttrResp, omResp] = await Promise.all([
+    fetch(`https://wttr.in/${city}?format=j1`),
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cfg.lat}&longitude=${cfg.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Bangkok&forecast_days=7`)
+  ]);
+  const wttr = await wttrResp.json();
+  const om = await omResp.json();
+  return { wttr, om };
 }
 
-// ========== 解析早/中/晚 ==========
-function parseTimeline(dayData) {
-  const hours = dayData.hourly || [];
-  // wttr.in hourly times: 0, 300, 600, 900, 1200, 1500, 1800, 2100
-  // Morning:  600 (6AM) or fallback to 300
-  // Noon:     1200 (12PM) or fallback to 900
-  // Evening:  1800 (6PM) or fallback to 1500
-
-  function findHour(target) {
-    // Exact match
-    const exact = hours.find(h => parseInt(h.time) === target);
+function parseTimeline(day) {
+  const hrs = day.hourly || [];
+  const find = (t) => {
+    const exact = hrs.find(h => +h.time === t);
     if (exact) return exact;
-    // Nearest match
-    let best = hours[0];
-    let bestDiff = Infinity;
-    for (const h of hours) {
-      const diff = Math.abs(parseInt(h.time) - target);
-      if (diff < bestDiff) { best = h; bestDiff = diff; }
-    }
+    let best = hrs[0], bd = 9999;
+    hrs.forEach(h => { const d = Math.abs(+h.time - t); if (d < bd) { best = h; bd = d; } });
     return best;
-  }
-
-  return {
-    morning: findHour(600),
-    noon:    findHour(1200),
-    evening: findHour(1800),
   };
+  return { m: find(600), n: find(1200), e: find(1800) };
 }
 
-// ========== 格式化时间 ==========
-function formatTime() {
-  const now = new Date();
-  const tz = now.getTimezoneOffset() === -420 ? '' : ` (UTC+7)`;
-  return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}${tz}`;
-}
+function isNight() { const h = new Date().getHours(); return h < 6 || h >= 19; }
 
-// ========== 判断是否为夜晚 ==========
-function isNightTime() {
-  const hour = new Date().getHours();
-  return hour < 6 || hour >= 19;
-}
-
-// ========== 设置主题 ==========
 function setTheme(code) {
-  const body = document.body;
-  body.className = '';
-  if (code === 113 || code === 116) {
-    body.classList.add(isNightTime() ? 'night' : 'clear');
-  } else if ([200, 386, 389].includes(code)) {
-    body.classList.add('thunder');
-  } else if (code >= 293 && code <= 314) {
-    body.classList.add('rain');
-  } else if ([119, 122, 143, 248, 260].includes(code)) {
-    body.classList.add('cloudy');
-  } else {
-    body.classList.add(isNightTime() ? 'night' : 'cloudy');
-  }
+  const b = document.body; b.className = '';
+  if (code === 113) b.classList.add(isNight() ? 'night' : 'clear');
+  else if ([200,386,389].includes(code)) b.classList.add('thunder');
+  else if (code >= 293 && code <= 314) b.classList.add('rain');
+  else if ([119,122,143,248,260].includes(code)) b.classList.add('cloudy');
+  else b.classList.add(isNight() ? 'night' : 'cloudy');
 }
 
-// ========== 渲染页面 ==========
 function render(data) {
-  const cc = data.current_condition[0];
-  const days = data.weather;
+  const { wttr, om } = data;
+  const cc = wttr.current_condition[0];
+  const days = wttr.weather;
   const today = days[0];
   const tl = parseTimeline(today);
-  const night = isNightTime();
-  const code = parseInt(cc.weatherCode);
+  const code = +cc.weatherCode;
 
   setTheme(code);
 
   // 当前天气
   document.getElementById('cur-temp').textContent = cc.temp_C;
-  document.getElementById('cur-desc').textContent = cc.weatherDesc[0].value.trim();
-  document.getElementById('cur-feels').textContent = `体感温度 ${cc.FeelsLikeC}°`;
-  document.getElementById('cur-humidity').textContent = `${cc.humidity}%`;
-  document.getElementById('cur-wind').textContent = `${cc.winddir16Point} ${cc.windspeedKmph}km/h`;
-  document.getElementById('cur-visibility').textContent = `${cc.visibility}km`;
-  document.getElementById('cur-uv').textContent = `UV ${cc.uvIndex}`;
+  document.getElementById('cur-desc').textContent = translateDesc(cc.weatherDesc[0]?.value);
+  document.getElementById('cur-feels').textContent = `体感 ${cc.FeelsLikeC}°`;
+  document.getElementById('cur-hum').textContent = cc.humidity + '%';
+  document.getElementById('cur-wind').textContent = cc.winddir16Point + ' ' + cc.windspeedKmph + 'km/h';
+  document.getElementById('cur-vis').textContent = cc.visibility + 'km';
+  document.getElementById('cur-uv').textContent = cc.uvIndex + '级';
 
   // 分时段
-  const renderSegment = (data, prefix) => {
-    if (!data) { document.getElementById(`${prefix}-temp`).textContent = '--°'; return; }
-    document.getElementById(`${prefix}-icon`).textContent = getWeatherIcon(parseInt(data.weatherCode), prefix === 'morning' ? false : prefix === 'evening');
-    document.getElementById(`${prefix}-temp`).textContent = `${data.tempC}°`;
-    document.getElementById(`${prefix}-desc`).textContent = data.weatherDesc[0].value.trim();
-  };
-  renderSegment(tl.morning, 'morning');
-  renderSegment(tl.noon, 'noon');
-  renderSegment(tl.evening, 'evening');
+  ['m','n','e'].forEach(k => {
+    const d = tl[k];
+    if (!d) { ['icon','temp','desc'].forEach(f => document.getElementById(k+'-'+f).textContent = '--'); return; }
+    document.getElementById(k+'-icon').innerHTML = getIcon(+d.weatherCode);
+    document.getElementById(k+'-temp').textContent = d.tempC + '°';
+    document.getElementById(k+'-desc').textContent = translateDesc(d.weatherDesc?.[0]?.value);
+  });
 
-  // 7天预报
-  const forecastList = document.getElementById('forecast-list');
-  forecastList.innerHTML = '';
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  // 24小时逐时预报
+  const hourlyStrip = document.getElementById('hourly-strip');
+  hourlyStrip.innerHTML = '';
+  const hourly = today.hourly || [];
+  hourly.forEach(h => {
+    const t = +h.time;
+    if (t > 2300) return;
+    const hour = Math.floor(t / 100);
+    const timeStr = `${hour}:00`;
+    const wc = +h.weatherCode;
+    const rainChance = parseInt(h.chanceofrain) || 0;
+    const rainClass = wc >= 200 && wc < 300 ? ' thunder' : '';
+    const item = document.createElement('div');
+    item.className = 'hourly-item';
+    item.innerHTML = `
+      <div class="hr-time">${timeStr}</div>
+      <div class="hr-icon">${getIcon(wc)}</div>
+      <div class="hr-temp">${h.tempC}°</div>
+      ${rainChance > 0 ? `<div class="hr-rain${rainClass}">🌧 ${rainChance}%</div>` : ''}
+    `;
+    hourlyStrip.appendChild(item);
+  });
 
-  for (const day of days) {
+  // 7天预报：前3天 wttr.in + 后4天 Open-Meteo
+  const wd = ['周日','周一','周二','周三','周四','周五','周六'];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const lst = document.getElementById('forecast-list');
+  lst.innerHTML = '';
+
+  const wttrCount = days.length;
+
+  for (let i = 0; i < wttrCount; i++) {
+    const day = days[i];
     const d = new Date(day.date);
-    const wd = weekdays[d.getDay()];
-    const todayStr = new Date().toISOString().slice(0,10);
-    const isToday = day.date === todayStr;
-
-    const dayCode = parseInt(day.hourly[4]?.weatherCode || 119);
-    const icon = getWeatherIcon(dayCode, false);
-
+    const isT = day.date === todayStr;
+    const mid = day.hourly[4] || day.hourly[0] || {};
     const row = document.createElement('div');
     row.className = 'forecast-row';
     row.innerHTML = `
-      <div class="day">
-        ${isToday ? '<strong>今天</strong>' : wd}
-        <div class="date">${d.getMonth()+1}/${d.getDate()}</div>
-      </div>
-      <div class="icon">${icon}</div>
-      <div class="desc">${day.hourly[4]?.weatherDesc[0].value || day.hourly[0]?.weatherDesc[0].value || '--'}</div>
-      <div class="temps">
-        ${day.maxtempC}° <span class="low">${day.mintempC}°</span>
-      </div>
+      <div class="day-col">${isT ? '今天' : wd[d.getDay()]}<div class="date-col">${d.getMonth()+1}/${d.getDate()}</div></div>
+      <div class="icon-col">${getIcon(+mid.weatherCode || 119)}</div>
+      <div class="desc-col">${translateDesc(mid.weatherDesc?.[0]?.value)}</div>
+      <div class="temp-col">${day.maxtempC}° <span class="lo">${day.mintempC}°</span></div>
     `;
-    forecastList.appendChild(row);
+    lst.appendChild(row);
   }
 
-  // 更新时间
-  document.getElementById('update-time').textContent = formatTime();
+  const omDaily = om.daily;
+  for (let i = wttrCount; i < omDaily.time.length; i++) {
+    const dateStr = omDaily.time[i];
+    const d = new Date(dateStr + 'T00:00:00');
+    const isT = dateStr === todayStr;
+    const wcode = omDaily.weathercode[i];
+    const wc = wmoToCode(wcode);
+    const row = document.createElement('div');
+    row.className = 'forecast-row';
+    row.innerHTML = `
+      <div class="day-col">${isT ? '今天' : wd[d.getDay()]}<div class="date-col">${d.getMonth()+1}/${d.getDate()}</div></div>
+      <div class="icon-col">${getIcon(wc)}</div>
+      <div class="desc-col">${WMO_DESC[wcode] || '--'}</div>
+      <div class="temp-col">${Math.round(omDaily.temperature_2m_max[i])}° <span class="lo">${Math.round(omDaily.temperature_2m_min[i])}°</span></div>
+    `;
+    lst.appendChild(row);
+  }
+
+  document.getElementById('update-time').textContent = new Date().toLocaleString('zh-CN', { hour12: false });
 }
 
-// ========== 页面操作 ==========
+// ===== IP 定位 + 自动切换城市 =====
+function matchCity(ipCity) {
+  if (!ipCity) return null;
+  const c = ipCity.toLowerCase().trim();
+  // 直接匹配
+  if (c.includes('chiang mai') || c.includes('chiangmai')) return 'Chiang+Mai';
+  if (c.includes('bangkok') || c.includes('曼谷')) return 'Bangkok';
+  if (c.includes('pattaya') || c.includes('芭堤雅') || c.includes('芭提雅')) return 'Pattaya';
+  if (c.includes('phuket') || c.includes('普吉')) return 'Phuket';
+  return null;
+}
+
+async function detectIP() {
+  let ipCity = '';
+  try {
+    const resp = await fetch('https://api.ip.sb/geoip');
+    if (!resp.ok) throw 0;
+    const d = await resp.json();
+    ipCity = d.city || '';
+    const country = d.country === 'China' ? '中国' : (d.country === 'Thailand' ? '泰国' : (d.country || ''));
+    const cnCity = toCNCity(ipCity);
+    const disp = cnCity ? `${country} ${cnCity}` : country;
+    if (disp) document.getElementById('ip-loc').textContent = '📍 ' + disp;
+  } catch {
+    try {
+      const resp = await fetch('https://ipapi.co/json/');
+      const d = await resp.json();
+      ipCity = d.city || '';
+      const country = d.country_name === 'China' ? '中国' : (d.country_name === 'Thailand' ? '泰国' : (d.country_name || ''));
+      const disp = ipCity ? `${country} ${ipCity}` : (country || '');
+      if (disp) document.getElementById('ip-loc').textContent = '📍 ' + disp;
+    } catch {}
+  }
+  return ipCity;
+}
+
+// ===== UI 操作 =====
 function toggleCityMenu() {
-  document.getElementById('city-dropdown').classList.toggle('show');
+  const dd = document.getElementById('city-dd');
+  const ar = document.getElementById('city-arrow');
+  const show = !dd.classList.contains('show');
+  dd.classList.toggle('show', show);
+  if (!show) { dd.classList.remove('show'); ar.classList.remove('up'); return; }
+  ar.classList.add('up');
 }
 
 function selectCity(el) {
-  currentCity = el.dataset.city;
-  document.getElementById('current-city').textContent = el.dataset.name;
-  document.getElementById('city-dropdown').classList.remove('show');
-  // 更新选项激活状态
-  document.querySelectorAll('.city-dropdown .option').forEach(o => o.classList.remove('active'));
-  el.classList.add('active');
+  curCity = el.dataset.city;
+  document.getElementById('cur-city').textContent = el.dataset.name;
+  document.getElementById('city-dd').classList.remove('show');
+  document.getElementById('city-arrow').classList.remove('up');
+  document.querySelectorAll('.opt').forEach(o => {
+    o.classList.toggle('active', o === el);
+    o.querySelector('.check').textContent = o === el ? '✔' : '';
+  });
+  localStorage.setItem('w-city', curCity);
   loadWeather();
 }
 
@@ -563,64 +545,52 @@ async function refreshWeather() {
 }
 
 async function loadWeather() {
-  const overlay = document.getElementById('loading');
-  overlay.classList.add('show');
+  document.getElementById('loading').classList.add('show');
   try {
-    const data = await fetchWeather(currentCity);
+    const data = await fetchWeather(curCity);
     render(data);
-    // 保存到 localStorage
-    localStorage.setItem('weather-city', currentCity);
-  } catch (e) {
-    console.error('Failed to fetch weather:', e);
-    // 使用缓存
-    const cached = localStorage.getItem('weather-cache');
-    if (cached) {
-      render(JSON.parse(cached));
-      document.getElementById('update-time').textContent = formatTime() + ' (缓存)';
-    }
-  } finally {
-    overlay.classList.remove('show');
-  }
-}
-
-// ========== IP 定位 ==========
-async function detectIPLocation() {
-  try {
-    const resp = await fetch('https://ipapi.co/json/');
-    if (!resp.ok) throw new Error();
-    const data = await resp.json();
-    if (data.city) {
-      document.getElementById('ip-location').textContent = `📍 ${data.city}, ${data.country_name}`;
-    }
   } catch(e) {
-    // IP定位失败，静默忽略
+    console.error('Fetch error:', e);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
   }
 }
 
-// ========== 点击外部关闭下拉 ==========
-document.addEventListener('click', (e) => {
-  const dropdown = document.getElementById('city-dropdown');
+// ===== 初始化 =====
+async function init() {
+  // 先检测 IP 所在城市
+  const ipCity = await detectIP();
+  const matched = matchCity(ipCity);
+
+  if (matched && CITIES[matched]) {
+    // IP 匹配到已知城市：自动切换
+    curCity = matched;
+    localStorage.setItem('w-city', curCity);
+  } else {
+    // 回退：localStorage → 默认清迈
+    const saved = localStorage.getItem('w-city');
+    if (saved && CITIES[saved]) curCity = saved;
+  }
+
+  document.getElementById('cur-city').textContent = CITIES[curCity].n;
+  document.querySelectorAll('.opt').forEach(o => {
+    if (o.dataset.city === curCity) {
+      o.classList.add('active');
+      o.querySelector('.check').textContent = '✔';
+    }
+  });
+  loadWeather();
+}
+
+// 点击外部关闭下拉
+document.addEventListener('click', e => {
+  const dd = document.getElementById('city-dd');
   const btn = document.querySelector('.city-btn');
-  if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
-    dropdown.classList.remove('show');
+  if (!btn.contains(e.target) && !dd.contains(e.target)) {
+    dd.classList.remove('show');
+    document.getElementById('city-arrow').classList.remove('up');
   }
 });
-
-// ========== 初始化 ==========
-function init() {
-  // 恢复上次选择
-  const saved = localStorage.getItem('weather-city');
-  if (saved && CITIES[saved]) {
-    currentCity = saved;
-    document.getElementById('current-city').textContent = CITIES[saved].name;
-    document.querySelector(`[data-city="${saved}"]`)?.classList.add('active');
-  }
-  // 默认清迈
-  document.querySelector('[data-city="Chiang+Mai"]')?.classList.add('active');
-
-  loadWeather();
-  detectIPLocation();
-}
 
 init();
 </script>
