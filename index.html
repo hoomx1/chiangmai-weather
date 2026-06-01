@@ -25,6 +25,7 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .city-selector { position: relative; justify-self: start; }
 .refresh-wrap { justify-self: end; }
 .ip-loc { font-size: 14px; color: rgba(255,255,255,0.85); text-align: center; white-space: nowrap; }
+.ip-loc::before { content: '📍'; margin-right: 4px; }
 .city-btn {
   background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
   border-radius: 22px; padding: 8px 18px; font-size: 15px; color: #fff;
@@ -421,6 +422,7 @@ function render(data) {
   // 24小时逐时预报（每1小时，共24段，含已过时段，缺失数据插值）
   const hourlyStrip = document.getElementById('hourly-strip');
   hourlyStrip.innerHTML = '';
+  const nowH = new Date().getHours();
   const hourly = today.hourly || [];
 
   const slot = {};
@@ -456,6 +458,9 @@ function render(data) {
     `;
     hourlyStrip.appendChild(item);
   }
+  // 滚动到当前小时居中
+  const itemW = 55 + 6;
+  hourlyStrip.scrollTo({ left: Math.max(0, nowH * itemW - hourlyStrip.clientWidth / 2 + 55 / 2), behavior: 'smooth' });
 
   // 7天预报：前3天 wttr.in + 后4天 Open-Meteo
   const wd = ['周日','周一','周二','周三','周四','周五','周六'];
@@ -524,7 +529,7 @@ async function detectIP() {
     const country = d.country === 'China' ? '中国' : (d.country === 'Thailand' ? '泰国' : (d.country || ''));
     const cnCity = toCNCity(ipCity);
     const disp = cnCity ? `${country} ${cnCity}` : country;
-    if (disp) document.getElementById('ip-loc').textContent = '📍 ' + disp;
+    if (disp) document.getElementById('ip-loc').textContent = disp;
   } catch {
     try {
       const resp = await fetch('https://ipapi.co/json/');
@@ -532,7 +537,7 @@ async function detectIP() {
       ipCity = d.city || '';
       const country = d.country_name === 'China' ? '中国' : (d.country_name === 'Thailand' ? '泰国' : (d.country_name || ''));
       const disp = ipCity ? `${country} ${ipCity}` : (country || '');
-      if (disp) document.getElementById('ip-loc').textContent = '📍 ' + disp;
+      if (disp) document.getElementById('ip-loc').textContent = disp;
     } catch {}
   }
   return ipCity;
