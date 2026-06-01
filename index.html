@@ -88,15 +88,20 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .tl-card .tl-desc { font-size: 13px; opacity: 0.75; margin-top: 5px; }
 
 /* 24小时逐时预报 */
-.hourly-strip {
-  display: flex; overflow-x: auto; gap: 8px; padding: 4px 0 8px;
-  margin-bottom: 28px; scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+.hourly-wrap {
+  margin-bottom: 28px; overflow: hidden;
 }
+.hourly-strip {
+  display: flex; overflow-x: auto; gap: 8px; padding: 4px 0 12px;
+  scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+}
+.hourly-strip::-webkit-scrollbar { height: 4px; }
+.hourly-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 2px; }
+.hourly-strip::-webkit-scrollbar-track { background: transparent; }
 .hourly-item {
-  flex: 0 0 auto; min-width: 62px; text-align: center;
+  flex: 0 0 62px; width: 62px; text-align: center;
   background: rgba(255,255,255,0.13); backdrop-filter: blur(10px);
-  border-radius: 14px; padding: 12px 6px 10px;
+  border-radius: 14px; padding: 12px 4px 10px;
   border: 1px solid rgba(255,255,255,0.18);
 }
 .hourly-item .hr-time { font-size: 11px; opacity: 0.7; margin-bottom: 6px; }
@@ -200,7 +205,9 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
   </div>
 
   <div class="sec-title">24小时逐时预报</div>
-  <div class="hourly-strip" id="hourly-strip"></div>
+  <div class="hourly-wrap">
+    <div class="hourly-strip" id="hourly-strip"></div>
+  </div>
 
   <div class="sec-title">7天天气预报</div>
   <div class="forecast-list" id="forecast-list"></div>
