@@ -414,17 +414,25 @@ function render(data) {
     document.getElementById(k+'-desc').textContent = translateDesc(d.weatherDesc?.[0]?.value);
   });
 
-  // 24小时逐时预报（当日 0-21点 + 次日 0-3点补全）
+  // 24小时逐时预报（从当前小时开始，最多 8 个 3 小时段）
   const hourlyStrip = document.getElementById('hourly-strip');
   hourlyStrip.innerHTML = '';
+  const nowH = new Date().getHours();
   const hourly = today.hourly || [];
   const nextHourly = days[1]?.hourly || [];
-  const combined = [...hourly, ...nextHourly.filter(h => +h.time < 400)];
-  combined.forEach(h => {
+
+  // 过滤已过时段，保留今天剩余的
+  const futureToday = hourly.filter(h => Math.floor(+h.time / 100) >= nowH);
+  // 从明天补足到 8 段
+  const need = 8 - futureToday.length;
+  const futureTomorrow = nextHourly.slice(0, Math.max(0, need));
+  const combined = [...futureToday, ...futureTomorrow];
+
+  combined.forEach((h, idx) => {
     const t = +h.time;
-    if (t > 2300) return;
     const hour = Math.floor(t / 100);
-    const timeStr = `${hour}:00`;
+    const isTomorrow = idx >= futureToday.length;
+    const timeStr = isTomorrow ? `明${hour}:00` : `${hour}:00`;
     const wc = +h.weatherCode;
     const rainChance = parseInt(h.chanceofrain) || 0;
     const rainClass = wc >= 200 && wc < 300 ? ' thunder' : '';
