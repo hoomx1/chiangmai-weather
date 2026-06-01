@@ -109,7 +109,7 @@ body.night { background: linear-gradient(180deg, #0c0c2d 0%, #1a1a4e 40%, #2a2a6
 .hourly-item .hr-icon { font-size: 22px; margin-bottom: 4px; height: 24px; display: flex; align-items: center; justify-content: center; }
 .hourly-item .hr-icon svg { width: 22px; height: 22px; }
 .hourly-item .hr-temp { font-size: 15px; font-weight: 300; }
-.hourly-item .hr-rain { font-size: 10px; opacity: 0.7; margin-top: 3px; color: #a0d8ef; }
+.hourly-item .hr-rain { font-size: 10px; opacity: 0.7; margin-top: 3px; color: #a0d8ef; line-height: 1.2; min-height: 1.2em; }
 .hourly-item .hr-rain.thunder { color: #ffd166; }
 
 /* 7天预报 */
@@ -449,7 +449,7 @@ function render(data) {
       <div class="hr-time">${timeStr}</div>
       <div class="hr-icon">${getIcon(wc)}</div>
       <div class="hr-temp">${data.tempC}°</div>
-      ${rainChance > 0 ? `<div class="hr-rain${rainClass}">🌧 ${rainChance}%</div>` : ''}
+      <div class="hr-rain${rainClass}">${rainChance > 0 ? `🌧 ${rainChance}%` : '&nbsp;'}</div>
     `;
     hourlyStrip.appendChild(item);
   }
